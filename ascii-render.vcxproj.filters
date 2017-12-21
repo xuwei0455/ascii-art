@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="toaster">
+      <UniqueIdentifier>{fda9f2ff-4a2f-4e26-a62d-36648017a80a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{4576da82-0a13-49d7-8f8b-00cd51fe996a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="font">
+      <UniqueIdentifier>{5e7eac53-2866-4c0b-b096-3342baec7635}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="drawing">
+      <UniqueIdentifier>{a285ed4e-b9bc-4b5e-8026-9eaf26a81624}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{c2b00f4c-a1ee-4b8a-a886-d618bfdab55e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mesh">
+      <UniqueIdentifier>{317dece4-ddc7-4381-8928-8967e84d50c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cimg">
+      <UniqueIdentifier>{33d8d6f5-b5bf-458d-a57d-f024b143327c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dirent">
+      <UniqueIdentifier>{c14c718e-6e34-4906-9324-25d21ed7c350}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="toaster\PixelToaster.cpp">
+      <Filter>toaster</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="font_8x13.cpp">
+      <Filter>font</Filter>
+    </ClCompile>
+    <ClCompile Include="font.cpp">
+      <Filter>font</Filter>
+    </ClCompile>
+    <ClCompile Include="font_5x7.cpp">
+      <Filter>font</Filter>
+    </ClCompile>
+    <ClCompile Include="font_8x8.cpp">
+      <Filter>font</Filter>
+    </ClCompile>
+    <ClCompile Include="drawing.cpp">
+      <Filter>drawing</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh.cpp">
+      <Filter>mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="toaster\PixelToaster.h">
+      <Filter>toaster</Filter>
+    </ClInclude>
+    <ClInclude Include="toaster\PixelToasterCommon.h">
+      <Filter>toaster</Filter>
+    </ClInclude>
+    <ClInclude Include="toaster\PixelToasterConversion.h">
+      <Filter>toaster</Filter>
+    </ClInclude>
+    <ClInclude Include="toaster\PixelToasterWindows.h">
+      <Filter>toaster</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\stb_rect_pack.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\stb_textedit.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\stb_truetype.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="font.h">
+      <Filter>font</Filter>
+    </ClInclude>
+    <ClInclude Include="drawing.h">
+      <Filter>drawing</Filter>
+    </ClInclude>
+    <ClInclude Include="math.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Cimg\CImg.h">
+      <Filter>Cimg</Filter>
+    </ClInclude>
+    <ClInclude Include="dirent.h">
+      <Filter>dirent</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="math.inl">
+      <Filter>math</Filter>
+    </None>
+  </ItemGroup>
+</Project>
