@@ -4,21 +4,26 @@
 #define WIN_HEIGHT 600
 #define IMAGE_DIR  "images\\"
 
+#include <vector>
+#include <algorithm>
+#include <iterator>
+#include <string>
+#include <locale>
+#include <codecvt>
+
 #include "toaster/PixelToaster.h"
 #include "imgui/imgui.h"
 #include "Cimg/CImg.h"
 #include "dirent.h"
 #include "drawing.h"
+#include "imgui/imgui_internal.h"
 
-#include <vector>
-#include <algorithm>
-#include <iterator>
-#include <string>
-
-
+using namespace std;
 using namespace PixelToaster;
 using namespace cimg_library;
 
+
+static float start_time = ImGui::GetTime();
 
 struct toaster_framebuffer_t final : framebuffer_t
 {
@@ -229,6 +234,38 @@ struct imgui_listener final : public PixelToaster::Listener
         io.MousePos.x = mouse.x * imgui_render_target->width / display.width();
         io.MousePos.y = mouse.y * imgui_render_target->height / display.height();
     }
+
+    /// On key down.
+    /// Called once only when a key is pressed and held.
+    /// @param display the display sending the event
+    /// @param key the key event data.
+    virtual void onKeyDown(DisplayInterface & display, Key key) override final
+    {
+        auto&io = ImGui::GetIO();
+        io.KeysDown[key] = true;
+    }
+
+    /// On key pressed.
+    /// Called multiple times while a key is pressed and held including the initial event.
+    /// @param display the display sending the event
+    /// @param key the key event data.
+
+    virtual void onKeyPressed(DisplayInterface & display, Key key) override final
+    {
+        auto&io = ImGui::GetIO();
+        io.KeysDown[key] = true;
+    }
+
+
+    /// On key up.
+    /// Called when a key is released.
+    /// @param display the display sending the event
+    /// @param key the key event data.
+
+    virtual void onKeyUp(DisplayInterface & display, Key key) override final {
+        auto&io = ImGui::GetIO();
+        io.KeysDown[key] = false;
+    }
 };
 
 float gen_rd(const int x, const int y)
@@ -287,6 +324,163 @@ void read_images(vector<string>& images)
     }
 }
 
+
+// Usage:
+//  static ExampleAppLog my_log;
+//  my_log.AddLog("Hello %d world\n", 123);
+//  my_log.Draw("title");
+struct ExampleAppLog
+{
+    ImGuiTextBuffer     Buf;
+    ImGuiTextFilter     Filter;
+    ImVector<int>       LineOffsets;        // Index to lines offset
+    bool                ScrollToBottom;
+
+    void    Clear() { Buf.clear(); LineOffsets.clear(); }
+
+    void    AddLog(const char* fmt, ...) IM_PRINTFARGS(2)
+    {
+        int old_size = Buf.size();
+        va_list args;
+        va_start(args, fmt);
+        Buf.appendv(fmt, args);
+        va_end(args);
+        for (int new_size = Buf.size(); old_size < new_size; old_size++)
+            if (Buf[old_size] == '\n')
+                LineOffsets.push_back(old_size);
+        ScrollToBottom = true;
+    }
+
+    void    Draw(const char* title, bool* p_open = NULL)
+    {
+        ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiSetCond_FirstUseEver);
+        ImGui::Begin(title, p_open);
+        if (ImGui::Button("Clear")) Clear();
+        ImGui::SameLine();
+        bool copy = ImGui::Button("Copy");
+        ImGui::SameLine();
+        Filter.Draw("Filter", -100.0f);
+        ImGui::Separator();
+        ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+        if (copy) ImGui::LogToClipboard();
+
+        if (Filter.IsActive())
+        {
+            const char* buf_begin = Buf.begin();
+            const char* line = buf_begin;
+            for (int line_no = 0; line != NULL; line_no++)
+            {
+                const char* line_end = (line_no < LineOffsets.Size) ? buf_begin + LineOffsets[line_no] : NULL;
+                if (Filter.PassFilter(line, line_end))
+                    ImGui::TextUnformatted(line, line_end);
+                line = line_end && line_end[1] ? line_end + 1 : NULL;
+            }
+        }
+        else
+        {
+            ImGui::TextUnformatted(Buf.begin());
+        }
+
+        if (ScrollToBottom)
+            ImGui::SetScrollHere(1.0f);
+        ScrollToBottom = false;
+        ImGui::EndChild();
+        ImGui::End();
+    }
+};
+
+void
+do_debug(bool* pause)
+{
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    if (ImGui::Begin("Debug:", nullptr, ImVec2(0, 0), 0.0f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        //ImGui::Text(u8"average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        //ImGui::Text(u8"Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
+        //ImGui::Spacing();
+
+        //ImGui::Checkbox("Pause", pause);
+    }
+}
+
+void
+do_exhibition(vector<CImg<float>>& images, toaster_framebuffer_t& buffer)
+{
+    auto image = images[static_cast<int>(ImGui::GetTime() - start_time) % images.size()];
+
+    unsigned int index = 0;
+    const auto x_iv = max(0, (WIN_WIDTH - image.width()) / 2);
+    const auto y_iv = max(0, (WIN_HEIGHT - image.height()) / 2);
+    for (auto y = 0; y < WIN_HEIGHT; ++y)
+    {
+        for (auto x = 0; x < WIN_WIDTH; ++x)
+        {
+            if (x < image.width() && y < image.height()) {
+                buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].r = static_cast<float>(*image.data(x, y, 0, 0));
+                buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].g = static_cast<float>(*image.data(x, y, 0, 1));
+                buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].b = static_cast<float>(*image.data(x, y, 0, 2));
+            }
+            ++index;
+        }
+    }
+}
+
+string
+convert_wchar_to_char(const wstring& string_to_convert)
+{
+    //setup converter
+    //wstring_convert<codecvt_utf8<wchar_t>, wchar_t> converter;
+    wstring_convert<codecvt_utf8<wchar_t>> converter;
+
+    //use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
+    return converter.to_bytes(string_to_convert);
+}
+
+
+void do_greet(bool greet_open, const int rate, int greet_status[4], wstring greet_words[4], ImGuiIO& io)
+{
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.2, io.DisplaySize.y * 0.2));
+    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.6, io.DisplaySize.y * 0.6), ImGuiSetCond_FirstUseEver);
+
+    if (ImGui::Begin("Greetings", &greet_open, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
+        ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar))
+    {
+        for (auto idx = 0; idx < 4; idx++)
+        {
+            if (greet_status[idx] == 0 && (idx == 0 || greet_status[idx - 1]) || greet_status[idx])
+            {
+                wstring words = greet_words[idx];
+                wstring text;
+
+                if (greet_status[idx])
+                {
+                    text = words;
+                }
+                else
+                {
+                    const auto len = static_cast<int>((ImGui::GetTime() - start_time) * rate);
+                    text = words.substr(0, len);
+                    // output will loss the first some words when convert here, no ideas about it
+                    // text = convert_wchar_to_char(words.substr(0, len)).c_str();
+                }
+
+                ImGui::BeginChild(idx + 'a', ImVec2(20, 300), false, ImGuiWindowFlags_NoScrollbar);
+                ImGui::TextWrapped(convert_wchar_to_char(text).c_str());
+                ImGui::EndChild();
+                ImGui::SameLine();
+
+                if (!greet_status[idx] && (ImGui::GetTime() - start_time) * rate > words.size())
+                {
+                    start_time = ImGui::GetTime();
+                    greet_status[idx] = 1;
+                }
+
+                if (greet_status[3]) { greet_open = false; }
+            }
+        }
+    }
+}
+
 int wmain()
 {
     Display display(WIN_TITLE, WIN_WIDTH, WIN_HEIGHT);
@@ -300,6 +494,14 @@ int wmain()
 
         unsigned char* pixels;
         int width, height;
+
+        ImFontConfig config;
+        config.MergeMode = true;
+        config.OversampleH = config.OversampleV = 1;
+        config.PixelSnapH = true;
+
+        io.Fonts->AddFontDefault();
+        io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\msyhbd.ttc", 18, &config, io.Fonts->GetGlyphRangesChinese());
         io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
 
         font_atlas.data = pixels;
@@ -314,11 +516,26 @@ int wmain()
     imgui_listener listener;
     display.listener(&listener);
 
+    // logger
+    static ExampleAppLog logger;
+    bool debug_open = false;
+    bool greet_open = true;
+
     auto pause = false;
     auto time = 0.00f;
 
     Timer timer;
     timer.reset();
+
+    // greetings
+    const auto rate = 2;
+    int greet_status[4] = { 0 };
+    wstring greet_words[4] = {
+        L"两姓联姻，一堂缔约，良缘永结，匹配同称。",
+        L"看此日桃花灼灼，宜室宜家，卜他年瓜瓞绵绵，尔昌尔炽。",
+        L"现谨以白头之约，书向鸿笺，好将红叶之盟，载明鸳谱。",
+        L"祝哥哥嫂嫂白头偕老，永结同心。"
+    };
 
     vector<string> image_paths;
     read_images(image_paths);
@@ -334,7 +551,6 @@ int wmain()
 
     // base buffer
     const toaster_framebuffer_t display_buffer(display);
-    auto i = 0;
     while (display.open())
     {
         auto buffer = display_buffer;
@@ -351,69 +567,17 @@ int wmain()
         ImGui::NewFrame();
         buffer.clear(0, 1.0f);
 
-        auto image = images[i++ /60 % 3];
-        unsigned int index = 0;
-        const auto x_iv = max(0, (WIN_WIDTH - image.width()) / 2);
-        const auto y_iv = max(0, (WIN_HEIGHT - image.height()) / 2);
-        for (auto y = 0; y < WIN_HEIGHT; ++y)
-        {
-            for (auto x = 0; x < WIN_WIDTH; ++x)
-            {
-                if (x < image.width() && y < image.height()) {
-                    buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].r = static_cast<float>(*image.data(x, y, 0, 0));
-                    buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].g = static_cast<float>(*image.data(x, y, 0, 1));
-                    buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].b = static_cast<float>(*image.data(x, y, 0, 2));
-                }
-                ++index;
-            }
-        }
+        if (ImGui::IsKeyPressed(122)) debug_open = !debug_open;
+        if (debug_open) do_debug(&pause);
+        if (greet_open) do_greet(greet_open, rate, greet_status, greet_words, io);
+        if (!greet_open) do_exhibition(images, buffer);
+        if (debug_open) logger.Draw("Debug: logger", &debug_open);
 
-        //if (!init_backgroup)
-        //{
-        //    unsigned int index = 0;
-        //    const auto x_iv = max(0, (WIN_WIDTH - image.width()) / 2);
-        //    const auto y_iv = max(0, (WIN_HEIGHT - image.height()) / 2);
-        //    for (auto y = 0; y < WIN_HEIGHT; ++y)
-        //    {
-        //        for (auto x = 0; x < WIN_WIDTH; ++x)
-        //        {
-        //            if (x < image.width() && y < image.height()) {
-        //                background[x + x_iv + (y + y_iv)*WIN_WIDTH].r = static_cast<float>(*image.data(x, y, 0, 0));
-        //                background[x + x_iv + (y + y_iv)*WIN_WIDTH].g = static_cast<float>(*image.data(x, y, 0, 1));
-        //                background[x + x_iv + (y + y_iv)*WIN_WIDTH].b = static_cast<float>(*image.data(x, y, 0, 2));
-        //            }
-        //            ++index;
-        //        }
-        //    }
-        //    init_backgroup = true;
-        //}
-
-        //unsigned int index = 0;
-        //for (auto y = 0; y < WIN_HEIGHT; ++y)
-        //{
-        //    for (auto x = 0; x < WIN_WIDTH; ++x)
-        //    {
-        //        const auto pixel = background[x + y*WIN_WIDTH];
-        //        buffer.colors[x + y*WIN_WIDTH].r = pixel.r;
-        //        buffer.colors[x + y*WIN_WIDTH].g = pixel.g;
-        //        buffer.colors[x + y*WIN_WIDTH].b = pixel.b;
-        //        ++index;
-        //    }
-        //}
-
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
-        if (ImGui::Begin("Example: Fixed Overlay", nullptr, ImVec2(0, 0), 0.0f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::Text("Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
-            ImGui::Text("Buffer: (%.0f,%.0f)", static_cast<float>(buffer.width), static_cast<float>(buffer.height));
-
-            ImGui::Spacing();
-
-            ImGui::Checkbox("Pause", &pause);
-        }
         ImGui::End();
-        ImGui::Render();
+        if (ImGui::GetCurrentWindowRead())
+            ImGui::Render();
         display.update(buffer.colors);
     }
 }
+
+
