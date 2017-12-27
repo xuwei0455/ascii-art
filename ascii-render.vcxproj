@@ -167,6 +167,7 @@
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="mci.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="toaster\PixelToaster.cpp" />
   </ItemGroup>
@@ -182,6 +183,7 @@
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
     <ClInclude Include="math.h" />
+    <ClInclude Include="mci.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="toaster\PixelToaster.h" />
     <ClInclude Include="toaster\PixelToasterCommon.h" />

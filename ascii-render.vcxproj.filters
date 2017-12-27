@@ -25,6 +25,9 @@
     <Filter Include="dirent">
       <UniqueIdentifier>{c14c718e-6e34-4906-9324-25d21ed7c350}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mci">
+      <UniqueIdentifier>{edc8566f-2d90-431d-992f-f1ca40b5d202}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="toaster\PixelToaster.cpp">
@@ -57,6 +60,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp">
       <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="mci.cpp">
+      <Filter>mci</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -107,6 +113,9 @@
     </ClInclude>
     <ClInclude Include="dirent.h">
       <Filter>dirent</Filter>
+    </ClInclude>
+    <ClInclude Include="mci.h">
+      <Filter>mci</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

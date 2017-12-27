@@ -3,6 +3,11 @@
 #define WIN_WIDTH  800 
 #define WIN_HEIGHT 600
 #define IMAGE_DIR  "images\\"
+#define AUDIO_DIR  "music\\"
+#define GREET_AUDIO  static_cast<string>(AUDIO_DIR) + "greets_audo.wav"
+#define BGM_AUDIO    static_cast<string>(AUDIO_DIR) + "greets_audo.wav"
+#define KEY_DEBUG  122
+
 
 #include <vector>
 #include <algorithm>
@@ -16,6 +21,7 @@
 #include "Cimg/CImg.h"
 #include "dirent.h"
 #include "drawing.h"
+#include "mci.h"
 #include "imgui/imgui_internal.h"
 
 using namespace std;
@@ -23,6 +29,7 @@ using namespace PixelToaster;
 using namespace cimg_library;
 
 
+auto player = Player();
 static float start_time = ImGui::GetTime();
 
 struct toaster_framebuffer_t final : framebuffer_t
@@ -395,17 +402,19 @@ do_debug(bool* pause)
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     if (ImGui::Begin("Debug:", nullptr, ImVec2(0, 0), 0.0f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
     {
-        //ImGui::Text(u8"average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        //ImGui::Text(u8"Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
-        //ImGui::Spacing();
+        ImGui::Text(u8"average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text(u8"Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
+        ImGui::Spacing();
 
-        //ImGui::Checkbox("Pause", pause);
+        ImGui::Checkbox("Pause", pause);
     }
 }
 
 void
 do_exhibition(vector<CImg<float>>& images, toaster_framebuffer_t& buffer)
 {
+    if (!player.is_play()) player.play(BGM_AUDIO);
+
     auto image = images[static_cast<int>(ImGui::GetTime() - start_time) % images.size()];
 
     unsigned int index = 0;
@@ -437,16 +446,18 @@ convert_wchar_to_char(const wstring& string_to_convert)
 }
 
 
-void do_greet(bool greet_open, const int rate, int greet_status[4], wstring greet_words[4], ImGuiIO& io)
+void do_greet(bool& greet_open, const int rate, int greet_status[4], wstring greet_words[4], ImGuiIO& io)
 {
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.2, io.DisplaySize.y * 0.2));
     ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.6, io.DisplaySize.y * 0.6), ImGuiSetCond_FirstUseEver);
 
-    if (ImGui::Begin("Greetings", &greet_open, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
+    if (ImGui::Begin("Greetings", &greet_open, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar))
     {
         for (auto idx = 0; idx < 4; idx++)
         {
+            if (greet_status[0] == 0 && !player.is_play()) player.play(GREET_AUDIO);
+
             if (greet_status[idx] == 0 && (idx == 0 || greet_status[idx - 1]) || greet_status[idx])
             {
                 wstring words = greet_words[idx];
@@ -475,11 +486,12 @@ void do_greet(bool greet_open, const int rate, int greet_status[4], wstring gree
                     greet_status[idx] = 1;
                 }
 
-                if (greet_status[3]) { greet_open = false; }
+                if (greet_status[3] == 1) { greet_open = false; player.close(); }
             }
         }
     }
 }
+
 
 int wmain()
 {
@@ -567,12 +579,13 @@ int wmain()
         ImGui::NewFrame();
         buffer.clear(0, 1.0f);
 
-        if (ImGui::IsKeyPressed(122)) debug_open = !debug_open;
+        if (ImGui::IsKeyPressed(KEY_DEBUG)) debug_open = !debug_open;
         if (debug_open) do_debug(&pause);
         if (greet_open) do_greet(greet_open, rate, greet_status, greet_words, io);
         if (!greet_open) do_exhibition(images, buffer);
         if (debug_open) logger.Draw("Debug: logger", &debug_open);
 
+        logger.AddLog("Play: %s \n", convert_wchar_to_char(player.get_message()));
         ImGui::End();
         if (ImGui::GetCurrentWindowRead())
             ImGui::Render();
