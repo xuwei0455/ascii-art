@@ -7,17 +7,8 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{4576da82-0a13-49d7-8f8b-00cd51fe996a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="font">
-      <UniqueIdentifier>{5e7eac53-2866-4c0b-b096-3342baec7635}</UniqueIdentifier>
-    </Filter>
     <Filter Include="drawing">
       <UniqueIdentifier>{a285ed4e-b9bc-4b5e-8026-9eaf26a81624}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="math">
-      <UniqueIdentifier>{c2b00f4c-a1ee-4b8a-a886-d618bfdab55e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mesh">
-      <UniqueIdentifier>{317dece4-ddc7-4381-8928-8967e84d50c8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Cimg">
       <UniqueIdentifier>{33d8d6f5-b5bf-458d-a57d-f024b143327c}</UniqueIdentifier>
@@ -27,6 +18,12 @@
     </Filter>
     <Filter Include="mci">
       <UniqueIdentifier>{edc8566f-2d90-431d-992f-f1ca40b5d202}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fonts">
+      <UniqueIdentifier>{e10ae2e7-b8cd-4bde-ba5b-23a8956d540b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{2394cc47-a1f4-4b30-89a1-f9057bb4caa7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -39,23 +36,8 @@
     <ClCompile Include="imgui\imgui_draw.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="font_8x13.cpp">
-      <Filter>font</Filter>
-    </ClCompile>
-    <ClCompile Include="font.cpp">
-      <Filter>font</Filter>
-    </ClCompile>
-    <ClCompile Include="font_5x7.cpp">
-      <Filter>font</Filter>
-    </ClCompile>
-    <ClCompile Include="font_8x8.cpp">
-      <Filter>font</Filter>
-    </ClCompile>
     <ClCompile Include="drawing.cpp">
       <Filter>drawing</Filter>
-    </ClCompile>
-    <ClCompile Include="mesh.cpp">
-      <Filter>mesh</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp">
@@ -63,6 +45,18 @@
     </ClCompile>
     <ClCompile Include="mci.cpp">
       <Filter>mci</Filter>
+    </ClCompile>
+    <ClCompile Include="font.cpp">
+      <Filter>fonts</Filter>
+    </ClCompile>
+    <ClCompile Include="font_5x7.cpp">
+      <Filter>fonts</Filter>
+    </ClCompile>
+    <ClCompile Include="font_8x8.cpp">
+      <Filter>fonts</Filter>
+    </ClCompile>
+    <ClCompile Include="font_8x13.cpp">
+      <Filter>fonts</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -96,17 +90,8 @@
     <ClInclude Include="imgui\stb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="font.h">
-      <Filter>font</Filter>
-    </ClInclude>
     <ClInclude Include="drawing.h">
       <Filter>drawing</Filter>
-    </ClInclude>
-    <ClInclude Include="math.h">
-      <Filter>math</Filter>
-    </ClInclude>
-    <ClInclude Include="mesh.h">
-      <Filter>mesh</Filter>
     </ClInclude>
     <ClInclude Include="Cimg\CImg.h">
       <Filter>Cimg</Filter>
@@ -117,10 +102,24 @@
     <ClInclude Include="mci.h">
       <Filter>mci</Filter>
     </ClInclude>
+    <ClInclude Include="font.h">
+      <Filter>fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="math.inl">
-      <Filter>math</Filter>
-    </None>
+    <Image Include="small.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="WinApp.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ascii-render.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

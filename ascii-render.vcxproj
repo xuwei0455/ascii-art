@@ -168,7 +168,6 @@
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mci.cpp" />
-    <ClCompile Include="mesh.cpp" />
     <ClCompile Include="toaster\PixelToaster.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -182,16 +181,19 @@
     <ClInclude Include="imgui\stb_rect_pack.h" />
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
-    <ClInclude Include="math.h" />
     <ClInclude Include="mci.h" />
-    <ClInclude Include="mesh.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="toaster\PixelToaster.h" />
     <ClInclude Include="toaster\PixelToasterCommon.h" />
     <ClInclude Include="toaster\PixelToasterConversion.h" />
     <ClInclude Include="toaster\PixelToasterWindows.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="math.inl" />
+    <ResourceCompile Include="ascii-render.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="small.ico" />
+    <Image Include="WinApp.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

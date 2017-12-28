@@ -4,8 +4,8 @@
 #define WIN_HEIGHT 600
 #define IMAGE_DIR  "images\\"
 #define AUDIO_DIR  "music\\"
-#define GREET_AUDIO  static_cast<string>(AUDIO_DIR) + "greets_audo.wav"
-#define BGM_AUDIO    static_cast<string>(AUDIO_DIR) + "greets_audo.wav"
+#define GREET_AUDIO  static_cast<string>(AUDIO_DIR) + "greets_audio.wav"
+#define BGM_AUDIO    static_cast<string>(AUDIO_DIR) + "bgm_audio.wav"
 #define KEY_DEBUG  122
 
 
@@ -275,39 +275,6 @@ struct imgui_listener final : public PixelToaster::Listener
     }
 };
 
-float gen_rd(const int x, const int y)
-{
-    double a = 0, b = 0, c, d, n = 0;
-    while ((c = a*a) + (d = b*b) < 4 && n++ < 880)
-    {
-        b = 2 * a*b + y*8e-9 - .645411; a = c - d + x*8e-9 + .356888;
-    }
-    return pow((n - 80) / 800, 3.);
-}
-
-
-float gen_gr(const int x, const int y)
-{
-    double a = 0, b = 0, c, d, n = 0;
-    while ((c = a*a) + (d = b*b) < 4 && n++ < 880)
-    {
-        b = 2 * a*b + y*8e-9 - .645411; a = c - d + x*8e-9 + .356888;
-    }
-    return pow((n - 80) / 800, .7);
-
-}
-
-float gen_bl(const int x, const int y)
-{
-    double a = 0, b = 0, c, d, n = 0;
-    while ((c = a*a) + (d = b*b) < 4 && n++ < 880)
-    {
-        b = 2 * a*b + y*8e-9 - .645411; a = c - d + x*8e-9 + .356888;
-    }
-    return pow((n - 80) / 800, .5);
-}
-
-
 void read_images(vector<string>& images)
 {
     DIR *dir;
@@ -336,16 +303,19 @@ void read_images(vector<string>& images)
 //  static ExampleAppLog my_log;
 //  my_log.AddLog("Hello %d world\n", 123);
 //  my_log.Draw("title");
-struct ExampleAppLog
+struct
+    ExampleAppLog
 {
     ImGuiTextBuffer     Buf;
     ImGuiTextFilter     Filter;
     ImVector<int>       LineOffsets;        // Index to lines offset
     bool                ScrollToBottom;
 
-    void    Clear() { Buf.clear(); LineOffsets.clear(); }
+    void
+        Clear() { Buf.clear(); LineOffsets.clear(); }
 
-    void    AddLog(const char* fmt, ...) IM_PRINTFARGS(2)
+    void
+        AddLog(const char* fmt, ...) IM_PRINTFARGS(2)
     {
         int old_size = Buf.size();
         va_list args;
@@ -358,13 +328,14 @@ struct ExampleAppLog
         ScrollToBottom = true;
     }
 
-    void    Draw(const char* title, bool* p_open = NULL)
+    void
+        Draw(const char* title, bool* p_open = nullptr)
     {
         ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiSetCond_FirstUseEver);
         ImGui::Begin(title, p_open);
         if (ImGui::Button("Clear")) Clear();
         ImGui::SameLine();
-        bool copy = ImGui::Button("Copy");
+        const bool copy = ImGui::Button("Copy");
         ImGui::SameLine();
         Filter.Draw("Filter", -100.0f);
         ImGui::Separator();
@@ -375,7 +346,7 @@ struct ExampleAppLog
         {
             const char* buf_begin = Buf.begin();
             const char* line = buf_begin;
-            for (int line_no = 0; line != NULL; line_no++)
+            for (int line_no = 0; line != nullptr; line_no++)
             {
                 const char* line_end = (line_no < LineOffsets.Size) ? buf_begin + LineOffsets[line_no] : NULL;
                 if (Filter.PassFilter(line, line_end))
@@ -397,29 +368,37 @@ struct ExampleAppLog
 };
 
 void
-do_debug(bool* pause)
+do_debug()
 {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    if (ImGui::Begin("Debug:", nullptr, ImVec2(0, 0), 0.0f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
+
+    if (ImGui::Begin("Debug:", nullptr, ImVec2(0, 0), 0.0f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar))
     {
         ImGui::Text(u8"average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Text(u8"Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
         ImGui::Spacing();
-
-        ImGui::Checkbox("Pause", pause);
     }
 }
 
 void
-do_exhibition(vector<CImg<float>>& images, toaster_framebuffer_t& buffer)
+do_exhibition(vector<CImg<float>>& images, toaster_framebuffer_t& buffer, const int shader_rate, Display& display)
 {
+    // play bgm
     if (!player.is_play()) player.play(BGM_AUDIO);
 
-    auto image = images[static_cast<int>(ImGui::GetTime() - start_time) % images.size()];
+    // handle play progress
+    const auto play_progress = (ImGui::GetTime() - start_time) / shader_rate;
+    const auto idx = static_cast<int>(play_progress);
+
+    if (idx >= images.size()) { player.close();  display.close(); return; } // end playing!
 
     unsigned int index = 0;
+    auto image = images[idx];
+
     const auto x_iv = max(0, (WIN_WIDTH - image.width()) / 2);
     const auto y_iv = max(0, (WIN_HEIGHT - image.height()) / 2);
+
+    // render playing image
     for (auto y = 0; y < WIN_HEIGHT; ++y)
     {
         for (auto x = 0; x < WIN_WIDTH; ++x)
@@ -430,6 +409,27 @@ do_exhibition(vector<CImg<float>>& images, toaster_framebuffer_t& buffer)
                 buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].b = static_cast<float>(*image.data(x, y, 0, 2));
             }
             ++index;
+        }
+    }
+
+    // add next image change
+    if (idx + 1 < images.size())
+    {
+        index = 0;
+        auto next_image = images[(idx + 1) % images.size()];
+
+        for (auto y = 0; y < WIN_HEIGHT; ++y)
+        {
+            for (auto x = 0; x < WIN_WIDTH; ++x)
+            {
+                if (x < image.width() && y < image.height() &&
+                    x < next_image.width() && y < next_image.height()) {
+                    buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].r += static_cast<float>(*next_image.data(x, y, 0, 0) - *image.data(x, y, 0, 0)) * (play_progress - int(play_progress));
+                    buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].g += static_cast<float>(*next_image.data(x, y, 0, 1) - *image.data(x, y, 0, 1)) * (play_progress - int(play_progress));
+                    buffer.colors[x + x_iv + (y + y_iv)*WIN_WIDTH].b += static_cast<float>(*next_image.data(x, y, 0, 2) - *image.data(x, y, 0, 2)) * (play_progress - int(play_progress));
+                }
+                ++index;
+            }
         }
     }
 }
@@ -446,8 +446,12 @@ convert_wchar_to_char(const wstring& string_to_convert)
 }
 
 
-void do_greet(bool& greet_open, const int rate, int greet_status[4], wstring greet_words[4], ImGuiIO& io)
+void
+do_greet(bool& greet_open, const int rate, int greet_status[4], wstring greet_words[4], ImGuiIO& io)
 {
+    // play greet audio
+    if (!player.is_play()) player.play(GREET_AUDIO);
+
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.2, io.DisplaySize.y * 0.2));
     ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.6, io.DisplaySize.y * 0.6), ImGuiSetCond_FirstUseEver);
 
@@ -456,7 +460,6 @@ void do_greet(bool& greet_open, const int rate, int greet_status[4], wstring gre
     {
         for (auto idx = 0; idx < 4; idx++)
         {
-            if (greet_status[0] == 0 && !player.is_play()) player.play(GREET_AUDIO);
 
             if (greet_status[idx] == 0 && (idx == 0 || greet_status[idx - 1]) || greet_status[idx])
             {
@@ -486,7 +489,8 @@ void do_greet(bool& greet_open, const int rate, int greet_status[4], wstring gre
                     greet_status[idx] = 1;
                 }
 
-                if (greet_status[3] == 1) { greet_open = false; player.close(); }
+                // end of greet
+                if (greet_status[3] == 1) { greet_open = false; start_time = ImGui::GetTime(); player.close(); }
             }
         }
     }
@@ -533,14 +537,9 @@ int wmain()
     bool debug_open = false;
     bool greet_open = true;
 
-    auto pause = false;
-    auto time = 0.00f;
-
-    Timer timer;
-    timer.reset();
-
     // greetings
-    const auto rate = 2;
+    const auto rate = 10;
+    const auto shade_rate = 8;
     int greet_status[4] = { 0 };
     wstring greet_words[4] = {
         L"Á½ÐÕÁªÒö£¬Ò»ÌÃµÞÔ¼£¬Á¼ÔµÓÀ½á£¬Æ¥ÅäÍ¬³Æ¡£",
@@ -571,21 +570,22 @@ int wmain()
         auto& io = ImGui::GetIO();
         io.DisplaySize.x = static_cast<float>(imgui_render_target->width);
         io.DisplaySize.y = static_cast<float>(imgui_render_target->height);
-        io.DeltaTime = static_cast<float>(timer.delta());
-
-        if (!pause)
-            time += io.DeltaTime;
 
         ImGui::NewFrame();
         buffer.clear(0, 1.0f);
 
-        if (ImGui::IsKeyPressed(KEY_DEBUG)) debug_open = !debug_open;
-        if (debug_open) do_debug(&pause);
-        if (greet_open) do_greet(greet_open, rate, greet_status, greet_words, io);
-        if (!greet_open) do_exhibition(images, buffer);
+        if (ImGui::IsKeyPressed(KEY_DEBUG)) { debug_open = !debug_open; start_time = ImGui::GetTime(); }
+        if (greet_open) {
+            do_greet(greet_open, rate, greet_status, greet_words, io);
+        }
+        if (!greet_open) {
+            do_exhibition(images, buffer, shade_rate, display);
+        }
+        if (debug_open) { do_debug(); }
         if (debug_open) logger.Draw("Debug: logger", &debug_open);
 
-        logger.AddLog("Play: %s \n", convert_wchar_to_char(player.get_message()));
+        //logger.AddLog("Play: %s \n", convert_wchar_to_char(player.get_message()));
+        logger.AddLog("Play Time: %f\n", start_time);
         ImGui::End();
         if (ImGui::GetCurrentWindowRead())
             ImGui::Render();
