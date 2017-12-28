@@ -1,7 +1,7 @@
 #define _USE_MATH_DEFINES
 #define WIN_TITLE  "Congratulations on your wedding! Heng Tuo!"
-#define WIN_WIDTH  800 
-#define WIN_HEIGHT 600
+#define WIN_WIDTH  1440 
+#define WIN_HEIGHT 960
 #define IMAGE_DIR  "images\\"
 #define AUDIO_DIR  "music\\"
 #define GREET_AUDIO  static_cast<string>(AUDIO_DIR) + "greets_audio.wav"
@@ -483,7 +483,7 @@ do_greet(bool& greet_open, const int rate, int greet_status[4], wstring greet_wo
                 ImGui::EndChild();
                 ImGui::SameLine();
 
-                if (!greet_status[idx] && (ImGui::GetTime() - start_time) * rate > words.size())
+                if (!greet_status[idx] && (ImGui::GetTime() - start_time) * rate - 6 > words.size())
                 {
                     start_time = ImGui::GetTime();
                     greet_status[idx] = 1;
@@ -538,7 +538,7 @@ int wmain()
     bool greet_open = true;
 
     // greetings
-    const auto rate = 10;
+    const auto rate = 3;
     const auto shade_rate = 8;
     int greet_status[4] = { 0 };
     wstring greet_words[4] = {
@@ -559,17 +559,24 @@ int wmain()
         const CImg<float> img(img_path.c_str());
         images.push_back(img);
     }
+    // timer
+    Timer timer;
+    timer.reset();
+    float time = 0.0f;
 
     // base buffer
     const toaster_framebuffer_t display_buffer(display);
     while (display.open())
     {
+        auto deltaTime = static_cast<float>(timer.delta());
+
         auto buffer = display_buffer;
         imgui_render_target = &buffer;
 
         auto& io = ImGui::GetIO();
         io.DisplaySize.x = static_cast<float>(imgui_render_target->width);
         io.DisplaySize.y = static_cast<float>(imgui_render_target->height);
+        io.DeltaTime = deltaTime;
 
         ImGui::NewFrame();
         buffer.clear(0, 1.0f);
